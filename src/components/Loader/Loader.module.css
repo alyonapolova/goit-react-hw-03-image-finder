@@ -1,7 +1,5 @@
-.loader {
-  height: 80px;
-  width: 80px;
-  border-radius: 9px;
-  background-color: green;
-  aria-label: 'loading';
+.loaderContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

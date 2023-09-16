@@ -1,15 +1,15 @@
-// const Image = () => {
-//   return (
-//     <div>
-//       {this.state.images.map(image => {
-//         return (
-//           <div key={image.id}>
-//             <img src={image.webformatURL} alt={image.name}></img>
-//           </div>
-//         );
-//       })}
-//     </div>
-//   );
-// };
+import React from 'react';
+import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem';
+import css from './ImageGallery.module.css';
 
-// export default Image;
+const ImageGallery = ({ images }) => {
+  return (
+    <div className={css.galleryList}>
+      {images.map(image => (
+        <ImageGalleryItem key={image.id} image={image} />
+      ))}
+    </div>
+  );
+};
+
+export default ImageGallery;

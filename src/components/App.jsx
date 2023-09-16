@@ -1,16 +1,17 @@
 import { React, Component } from 'react';
-import axios from 'axios';
-
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import Loader from './Loader/Loader';
-
+import Searchbar from './Searchbar/Searchbar';
+import ImageGallery from './ImageGallery/ImageGallery';
+import Button from './Button/Button';
+import { fetchImages } from './api/Api';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 export class App extends Component {
   state = {
-    apiURL: 'https://pixabay.com/api/',
-    apiKey: '38646134-f0d35baa377bc06e37b81532c',
     page: 1,
     q: '',
+
     per_page: 12,
     images: [],
     isLoading: false,
@@ -18,7 +19,7 @@ export class App extends Component {
   };
 
   createLightbox = () => {
-    const lightbox = new SimpleLightbox('.gallery a', {
+    const lightbox = new SimpleLightbox('.gallery', {
       captionType: 'attr',
       captionsData: 'alt',
       captionPosition: 'bottom',
@@ -33,15 +34,14 @@ export class App extends Component {
   }
 
   onInputValue = e => {
-    console.log(e.target.value);
-    if (e.target.value !== '') {
-      this.setState({ q: e.target.value.trim() });
-    }
+    this.setState({
+      q: e.target.value.trim(),
+    });
   };
 
   onSubmitForm = async e => {
     e.preventDefault();
-    console.log(e.target);
+
     try {
       if (this.state.page !== 1) {
         await this.setState({ page: 1 });
@@ -49,25 +49,23 @@ export class App extends Component {
 
       this.setState({ isLoading: true });
 
-      const response = await axios.get(this.state.apiURL, {
-        params: {
-          key: this.state.apiKey,
-          q: this.state.q,
-          per_page: this.state.per_page,
-          page: this.state.page,
-          safesearch: true,
-          image_type: 'photo',
-        },
-      });
-      console.log(response.data);
+      const data = await fetchImages(
+        this.state.q,
+        this.state.per_page,
+        this.state.page
+      );
 
-      if (response.data.totalHits > 12) {
+      //console.log(data);
+
+      if (data.totalHits === 0) {
+        Notify.failure('We dont have any photos that match your request.');
+      }
+      if (data.totalHits > 12) {
         this.setState({ loadMore: true });
       } else {
         this.setState({ loadMore: false });
       }
-
-      this.setState({ images: response.data.hits });
+      this.setState({ images: data.hits });
     } catch (error) {
       console.error(error);
     } finally {
@@ -76,28 +74,23 @@ export class App extends Component {
   };
 
   onLoadMoreBnt = async e => {
-    console.log(e.target);
+    //console.log(e.target);
 
     try {
       await this.setState(prevState => ({
         isLoading: true,
         page: prevState.page + 1,
       }));
-      const response = await axios.get(this.state.apiURL, {
-        params: {
-          key: this.state.apiKey,
-          q: this.state.q,
-          per_page: this.state.per_page,
-          page: this.state.page,
-          safesearch: true,
-          image_type: 'photo',
-        },
-      });
-      console.log(response.data);
+      const data = await fetchImages(
+        this.state.q,
+        this.state.per_page,
+        this.state.page
+      );
+
       this.setState(prevState => ({
-        images: [...prevState.images, ...response.data.hits],
+        images: [...prevState.images, ...data.hits],
       }));
-      if (response.data.totalHits <= 12) {
+      if (data.totalHits <= 12) {
         this.setState({ loadMore: false });
       }
     } catch (error) {
@@ -110,30 +103,15 @@ export class App extends Component {
   render() {
     return (
       <div>
-        <form onSubmit={this.onSubmitForm}>
-          <button type="submit">Search</button>
-          <label>
-            <input
-              type="text"
-              value={this.state.q}
-              onChange={this.onInputValue}
-              name="q"
-            ></input>
-          </label>
-        </form>
-
-        <div className="gallery">
-          {this.state.images.map(image => {
-            return (
-              <a href={image.largeImageURL} key={image.id}>
-                <img src={image.webformatURL} alt={image.name}></img>
-              </a>
-            );
-          })}
-        </div>
+        <Searchbar
+          value={this.state.q}
+          onSubmit={this.onSubmitForm}
+          onChange={this.onInputValue}
+        />
+        <ImageGallery images={this.state.images} />
         {this.state.isLoading && <Loader />}
-        {this.state.loadMore && (
-          <button onClick={this.onLoadMoreBnt}>Load more</button>
+        {this.state.loadMore && !this.state.isLoading && (
+          <Button onClick={this.onLoadMoreBnt} />
         )}
       </div>
     );
