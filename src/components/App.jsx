@@ -1,6 +1,9 @@
 import { React, Component } from 'react';
 import axios from 'axios';
-import { Audio } from 'react-loader-spinner';
+
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
+import Loader from './Loader/Loader';
 
 export class App extends Component {
   state = {
@@ -13,6 +16,21 @@ export class App extends Component {
     isLoading: false,
     loadMore: false,
   };
+
+  createLightbox = () => {
+    const lightbox = new SimpleLightbox('.gallery a', {
+      captionType: 'attr',
+      captionsData: 'alt',
+      captionPosition: 'bottom',
+      captionDelay: 250,
+    });
+
+    return lightbox;
+  };
+
+  componentDidUpdate() {
+    this.createLightbox();
+  }
 
   onInputValue = e => {
     console.log(e.target.value);
@@ -104,27 +122,16 @@ export class App extends Component {
           </label>
         </form>
 
-        <ul className="galery">
+        <div className="gallery">
           {this.state.images.map(image => {
             return (
-              <li className="gallery-item" key={image.id}>
+              <a href={image.largeImageURL} key={image.id}>
                 <img src={image.webformatURL} alt={image.name}></img>
-              </li>
+              </a>
             );
           })}
-        </ul>
-        {this.state.isLoading && (
-          <Audio
-            height="80"
-            width="80"
-            radius="9"
-            color="green"
-            ariaLabel="loading"
-            wrapperStyle
-            wrapperClass
-          />
-        )}
-
+        </div>
+        {this.state.isLoading && <Loader />}
         {this.state.loadMore && (
           <button onClick={this.onLoadMoreBnt}>Load more</button>
         )}
